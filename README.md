@@ -38,6 +38,7 @@ You can install `CachePX` via **Swift Package Manager**:
 dependencies: [
     .package(url: "https://github.com/PavelKoyushev/CachePX", from: "1.0.0")
 ]
+```
 
 ## Using ImageView to load network image
 
