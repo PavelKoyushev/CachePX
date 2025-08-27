@@ -9,7 +9,7 @@ It provides a convenient `ImageView` for SwiftUI to load and cache images, as we
 
 ---
 
-## Features
+### Features
 
 - 🚀 SwiftUI `ImageView` for easy image loading with caching  
 - 💾 Disk caching 
@@ -19,7 +19,7 @@ It provides a convenient `ImageView` for SwiftUI to load and cache images, as we
 
 ---
 
-## Requirements
+### Requirements
 
 - Xcode 14+
 - iOS 14.0+
@@ -40,7 +40,15 @@ dependencies: [
 ]
 ```
 
-## Using `ImageView` to load network image
+### Setup
+
+In your AppDelegate
+
+```swift
+StorageService.shared.setup()
+```
+
+### Using `ImageView` to load network image
 
 ```swift
 var body: some View {
@@ -57,7 +65,7 @@ var body: some View {
 }
 ```
 
-## Cache Manager
+### Cache Manager
 
 ```swift
 import CachePX
@@ -70,7 +78,7 @@ print("Cache size: \(size.0)mb bytes \(size.1)% of disk size")
 CacheManager.shared.cleanCache()
 ```
 
-## Logging
+### Logging
 
 You can subscribe to ExternalLogger to enable logging:
 
@@ -90,6 +98,6 @@ struct ConsoleLogger: ExternalLogger {
 Logger.shared.subscribe(ConsoleLogger())
 ```
 
-## License
+### License
 
 CachePX is released under the MIT license.
