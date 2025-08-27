@@ -40,7 +40,7 @@ dependencies: [
 ]
 ```
 
-## Using ImageView to load network image
+## Using 'ImageView' to load network image
 
 ```swift
 var body: some View {
