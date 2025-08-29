@@ -16,9 +16,12 @@ public actor StorageService {
 
 extension StorageService {
     
+    nonisolated
     public func setup() {
-        openDatabase()
-        createTable()
+        Task(priority: .userInitiated) {
+            await openDatabase()
+            await createTable()
+        }
     }
     
     private func openDatabase() {

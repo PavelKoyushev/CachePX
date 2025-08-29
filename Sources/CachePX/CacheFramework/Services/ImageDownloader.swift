@@ -3,7 +3,7 @@ import UIKit.UIImage
 
 protocol ImageDownloaderProtocol {
     
-    func imageStreamWithThrowing(from urlString: String) -> AsyncThrowingStream<UIImage, Error>
+    func imageStreamWithThrowing(from urlString: String) async -> AsyncThrowingStream<UIImage, Error>
 }
 
 struct ImageDownloader {
@@ -25,7 +25,7 @@ struct ImageDownloader {
 
 extension ImageDownloader: ImageDownloaderProtocol {
     
-    func imageStreamWithThrowing(from urlString: String) -> AsyncThrowingStream<UIImage, Error> {
+    func imageStreamWithThrowing(from urlString: String) async -> AsyncThrowingStream<UIImage, Error> {
         
         AsyncThrowingStream { continuation in
             Task(priority: .userInitiated) {
