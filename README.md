@@ -11,11 +11,12 @@ It provides a convenient `ImageView` for SwiftUI to load and cache images, as we
 
 ### Features
 
-- 🚀 SwiftUI `ImageView` for easy image loading with caching  
-- 💾 Disk caching 
-- 📊 Cache size info (MB, %) 
-- 🧹 Clean cache on demand (`cleanCache`)  
-- 🪵 Extensible logging system (`ExternalLogger`)  
+- SwiftUI `ImageView` for easy image loading with caching
+- Prefetching images
+- Disk caching 
+- Cache size info (MB, %) 
+- Clean cache on demand (`cleanCache`)  
+- Extensible logging system (`ExternalLogger`)  
 
 ---
 
@@ -64,7 +65,12 @@ var body: some View {
     .frame(width: 300, height: 300)
 }
 ```
+### Prefetching images
 
+```swift
+ImagePrefetcher().prefetch(for: [URL])
+```
+         
 ### Cache Manager
 
 ```swift
