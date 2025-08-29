@@ -34,8 +34,6 @@ extension ImageViewManager {
         
         task = Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                await Task.yield()
-                
                 if let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString) {
                     for try await img in stream {
                         await MainActor.run { [weak self] in
