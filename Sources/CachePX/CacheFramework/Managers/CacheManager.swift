@@ -95,7 +95,7 @@ extension CacheManager {
         }
         
         DirectoryManager.shared.resetCreated()
-        await StorageService.shared.setup()
+        StorageService.shared.setup()
     }
     
     private func cleanDirectory(at url: URL) async -> Bool {
