@@ -54,12 +54,12 @@ StorageService.shared.setup()
 ```swift
 var body: some View {
     ImageView(url: URL(string: "https://example.com/picture.jpeg")) {
-          Color.gray
+        Color.gray
     } errorContent: {
-          Color.red
+        Color.red
     } imageContent: { image in
-          Image(uiImage: image)
-              .resizable()
+        Image(uiImage: image)
+            .resizable()
     }
     .scaledToFit()
     .frame(width: 300, height: 300)
