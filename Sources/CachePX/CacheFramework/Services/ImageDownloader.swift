@@ -87,12 +87,12 @@ private extension ImageDownloader {
         }
         
         if let size = options?.downSample,
-           let downsampled = await image.downsample(to: size),
-           let data = downsampled.jpegData(compressionQuality: 1),
+           let data = result.data.resized(width: size.width, height: size.height, quality: size.quality),
+           let imageResult = UIImage(data: data),
            let path = try await cache.save(data: data, fileName: result.url.fileName(localPath)) {
             
             await upsertImage(result, filePath: path)
-            continuation.yield(downsampled)
+            continuation.yield(imageResult)
         } else if let path = try await cache.save(data: result.data, fileName: result.url.fileName(localPath)) {
             
             await insertImage(result, filePath: path)

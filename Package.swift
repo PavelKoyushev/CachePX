@@ -5,14 +5,36 @@ import PackageDescription
 
 let package = Package(
     name: "CachePX",
-    platforms: [.iOS(.v14), .macOS(.v11)],
+    platforms: [
+        .iOS(.v14),
+        .macOS(.v11)
+    ],
     products: [
         .library(
             name: "CachePX",
-            targets: ["CachePX"])
+            targets: [
+                "CachePX"
+            ]
+        )
     ],
     targets: [
         .target(
-            name: "CachePX")
+            name: "CachePX",
+            dependencies: [
+                "CachePXCore"
+            ]
+        ),
+        .target(
+            name: "CachePXCore",
+            dependencies: [
+                "OpenCV"
+            ],
+            path: "Sources/CachePXCore",
+            publicHeadersPath: "."
+        ),
+        .binaryTarget(
+            name: "OpenCV",
+            path: "Frameworks/opencv2.xcframework"
+        )
     ]
 )
