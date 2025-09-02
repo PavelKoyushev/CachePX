@@ -1,8 +1,3 @@
-//
-//  ImagePrefetcher.swift
-//  CachePX
-//
-
 import Foundation
 
 public class ImagePrefetcher {
