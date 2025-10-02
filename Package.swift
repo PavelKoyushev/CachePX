@@ -17,6 +17,9 @@ let package = Package(
             ]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/PavelKoyushev/OpenCV-package", from: "1.0.0")
+    ],
     targets: [
         .target(
             name: "CachePX",
@@ -27,14 +30,10 @@ let package = Package(
         .target(
             name: "CachePXCore",
             dependencies: [
-                "OpenCV"
+                "OpenCV-package"
             ],
             path: "Sources/CachePXCore",
             publicHeadersPath: "."
-        ),
-        .binaryTarget(
-            name: "OpenCV",
-            path: "Frameworks/opencv2.xcframework"
         )
     ]
 )
