@@ -67,10 +67,34 @@ var body: some View {
 ```
 ### Prefetching images
 
+`ImagePrefetcher` loads images into the cache ahead of time with a configurable concurrency limit, so background work does not compete with on-screen `ImageView` requests.
+
+**Highlights**
+
+- Shared instance is safe across screens — each URL is tracked independently
+- Overlapping `prefetch(for:)` calls skip URLs already in flight instead of restarting them
+- Prefetch tasks run at `.utility` priority
+- Already cached URLs (fresh ETag / Last-Modified) are skipped without re-downloading
+
 ```swift
-ImagePrefetcher().prefetch(for: [URL])
+let prefetcher = ImagePrefetcher(maxConcurrent: 4)
+
+await prefetcher.prefetch(for: urls)
+
+// Optional: stop prefetch for one URL or everything
+await prefetcher.cancelPrefetch(for: someURL)
+await prefetcher.cancelAll()
 ```
-         
+
+#### API
+
+| Method | Description |
+|--------|-------------|
+| `init(options: LoadOptions? = nil, maxConcurrent: Int = 5)` | Creates a prefetcher. `maxConcurrent` caps simultaneous downloads. |
+| `prefetch(for urls: [URL])` | Starts prefetching. URLs already in progress are ignored. |
+| `cancelPrefetch(for url: URL)` | Cancels prefetch for one URL, if running. |
+| `cancelAll()` | Cancels all in-progress prefetches. |
+
 ### Cache Manager
 
 ```swift
