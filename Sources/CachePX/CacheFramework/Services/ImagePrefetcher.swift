@@ -25,10 +25,14 @@ public actor ImagePrefetcher {
     /// URLs already being prefetched are skipped, not restarted.
     public func prefetch(for urls: [URL]) {
         for url in urls {
-            guard tasks[url] == nil else { continue }
+            guard tasks[url] == nil else {
+                continue
+            }
             
             tasks[url] = Task(priority: .utility) { [weak self] in
+                
                 await self?.limiter.acquire()
+                
                 defer {
                     Task {
                         await self?.limiter.release()
@@ -37,10 +41,17 @@ public actor ImagePrefetcher {
                 
                 do {
                     try Task.checkCancellation()
-                    _ = await self?.service.imageStreamWithThrowing(from: url.absoluteString)
+                    let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString)
+                    
+                    if let stream {
+                        for try await _ in stream {
+                            // stream yielded value
+                        }
+                    }
                 } catch {
-                    // CancellationError
+                    // cancelled
                 }
+                
                 await self?.taskFinished(for: url)
             }
         }
