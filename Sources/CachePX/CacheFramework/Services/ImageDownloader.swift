@@ -26,53 +26,51 @@ struct ImageDownloader {
 extension ImageDownloader: ImageDownloaderProtocol {
     
     func imageStreamWithThrowing(from urlString: String) async -> AsyncThrowingStream<UIImage, Error> {
-        
         AsyncThrowingStream { continuation in
-            Task(priority: .userInitiated) {
-                guard let url = URL(string: urlString) else {
-                    Logger.shared.logEvent("\(ErrorLoad.invalidURL.description): \(urlString)")
-                    continuation.finish(throwing: ErrorLoad.invalidURL)
-                    return
-                }
-                
-                if let metadata = await db.getDateForImage(with: urlString) {
-                    
-                    await Task.yield()
-                    try Task.checkCancellation()
-                    
-                    if metadata.notModified {
-                        if let image = try await cache.image(fileName: metadata.localPath) {
-                            continuation.yield(image)
-                            continuation.finish()
-                        } else {
-                            Logger.shared.logEvent("\(ErrorLoad.cache.description): \(urlString)")
-                            continuation.finish(throwing: ErrorLoad.cache)
-                        }
-                    } else {
-                        
-                        if let cachedImage = try await cache.image(fileName: metadata.localPath) {
-                            continuation.yield(cachedImage)
-                        }
-                        
-                        let result = try await loadService.fetchImageIfNeeded(from: url, metadata: metadata)
-                        try await handleDownloadedImage(result, localPath: metadata.localPath, continuation: continuation)
-                        
-                        continuation.finish()
+            let task = Task {
+                do {
+                    guard let url = URL(string: urlString) else {
+                        Logger.shared.logEvent("\(ErrorLoad.invalidURL.description): \(urlString)")
+                        throw ErrorLoad.invalidURL
                     }
-                } else {
-                    await Task.yield()
-                    try Task.checkCancellation()
-                    
-                    do {
-                        let result = try await loadService.downloadImage(from: urlString)
-                        try await handleDownloadedImage(result, localPath: nil, continuation: continuation)
-                        continuation.finish()
-                    } catch {
-                        continuation.finish(throwing: error)
-                    }
+                    try await load(url: url, continuation: continuation)
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
                 }
             }
+            continuation.onTermination = { _ in task.cancel() }
         }
+    }
+}
+
+private extension ImageDownloader {
+    
+    func load(url: URL, continuation: AsyncThrowingStream<UIImage, Error>.Continuation) async throws {
+        let urlString = url.absoluteString
+        
+        guard let metadata = await db.getDateForImage(with: urlString) else {
+            try Task.checkCancellation()
+            let result = try await loadService.downloadImage(from: urlString)
+            try await handleDownloadedImage(result, localPath: nil, continuation: continuation)
+            return
+        }
+        
+        try Task.checkCancellation()
+        let cached = try await cache.image(fileName: metadata.localPath)
+        if let cached { continuation.yield(cached) }
+        
+        if metadata.notModified {
+            guard cached != nil else {
+                Logger.shared.logEvent("\(ErrorLoad.cache.description): \(urlString)")
+                throw ErrorLoad.cache
+            }
+            return
+        }
+        
+        try Task.checkCancellation()
+        let result = try await loadService.fetchImageIfNeeded(from: url, metadata: metadata)
+        try await handleDownloadedImage(result, localPath: metadata.localPath, continuation: continuation)
     }
 }
 
