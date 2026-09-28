@@ -34,9 +34,7 @@ public actor ImagePrefetcher {
                 await self?.limiter.acquire()
                 
                 defer {
-                    Task {
-                        await self?.limiter.release()
-                    }
+                    await self?.limiter.release()
                 }
                 
                 do {
