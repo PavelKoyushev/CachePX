@@ -1,61 +1,56 @@
 import Foundation.NSURL
 import Combine
 
-@MainActor
 final class ImageViewManager: ObservableObject {
     
-    private(set) var state: LoadState = .loading
-    private(set) var isLoaded: Bool = false
-    private var task: Task<Void, Never>? = nil
+    @Published private(set) var state: LoadState = .loading
     
-    private let directoryManager: DirectoryManagerProtocol
-    private let imageStorage: ImageStorageProtocol
-    private let loadService: NetworkServiceProtocol
+    private var loadedURL: URL?
+    private var task: Task<Void, Never>?
     private let service: ImageDownloaderProtocol
     
-    private let options: LoadOptions?
-    
     init(options: LoadOptions?) {
-        self.options = options
-        
-        self.directoryManager = DirectoryManager.shared
-        self.imageStorage = ImageStorageManager(directoryURL: directoryManager.cacheImagesURL)
-        self.loadService = NetworkService()
-        self.service = ImageDownloader(cache: imageStorage,
-                                       loadService: loadService,
-                                       options: options)
+        self.service = ImageDownloader(
+            cache: ImageStorageManager(directoryURL: DirectoryManager.shared.cacheImagesURL),
+            loadService: NetworkService(),
+            options: options
+        )
     }
-}
-
-extension ImageViewManager {
     
     func loadImage(from url: URL) {
-        guard !isLoaded else { return }
+        guard loadedURL != url else { return }
         
-        task = Task.detached(priority: .userInitiated) { [weak self] in
+        task?.cancel()
+        task = Task(priority: .userInitiated) { [weak self] in
+            await MainActor.run { [weak self] in
+                if case .image = self?.state { return }
+                self?.state = .loading
+            }
+            
             do {
                 if let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString) {
                     for try await img in stream {
                         await MainActor.run { [weak self] in
                             self?.state = .image(img)
-                            self?.isLoaded = true
-                            self?.objectWillChange.send()
                         }
+                    }
+                    await MainActor.run { [weak self] in
+                        self?.loadedURL = url
                     }
                 }
             } catch {
-                await MainActor.run { [weak self] in
-                    self?.state = .error
-                    self?.objectWillChange.send()
+                if !Task.isCancelled {
+                    await MainActor.run { [weak self] in
+                        if case .image = self?.state { return }
+                        self?.state = .error
+                    }
                 }
             }
         }
     }
     
     func cancelTask() {
-        DispatchQueue.main.async { [weak self] in
-            self?.task?.cancel()
-            self?.task = nil
-        }
+        task?.cancel()
+        task = nil
     }
 }

@@ -1,23 +1,21 @@
 import SwiftUI
 
-public struct ImageView<Loading: View, Error: View, ImageContent: View>: View {
+public struct ImageView<Loading: View, ErrorContent: View, ImageContent: View>: View {
     
     @StateObject private var manager: ImageViewManager
     
     let url: URL
-    let options: LoadOptions?
     let loadingContent: Loading
-    let errorContent: Error
+    let errorContent: ErrorContent
     let imageContent: (UIImage) -> ImageContent
     
     public init(url: URL,
                 options: LoadOptions? = nil,
                 @ViewBuilder loadingContent: () -> Loading,
-                @ViewBuilder errorContent: () -> Error,
+                @ViewBuilder errorContent: () -> ErrorContent,
                 @ViewBuilder imageContent: @escaping (UIImage) -> ImageContent) {
         
         self.url = url
-        self.options = options
         self.loadingContent = loadingContent()
         self.errorContent = errorContent()
         self.imageContent = imageContent
@@ -29,6 +27,9 @@ public struct ImageView<Loading: View, Error: View, ImageContent: View>: View {
         content
             .onAppear(perform: onAppear)
             .onDisappear(perform: onDisappear)
+            .onChange(of: url) { _ in
+                manager.loadImage(from: url)
+            }
     }
 }
 
@@ -45,9 +46,6 @@ private extension ImageView {
             errorContent
         }
     }
-}
-
-private extension ImageView {
     
     func onAppear() {
         manager.loadImage(from: url)
