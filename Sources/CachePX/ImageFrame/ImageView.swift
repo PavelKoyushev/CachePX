@@ -25,10 +25,8 @@ public struct ImageView<Loading: View, ErrorContent: View, ImageContent: View>: 
     
     public var body: some View {
         content
-            .onAppear(perform: onAppear)
-            .onDisappear(perform: onDisappear)
-            .onChange(of: url) { _ in
-                manager.loadImage(from: url)
+            .task(id: url) {
+                await manager.load(from: url)
             }
     }
 }
@@ -45,13 +43,5 @@ private extension ImageView {
         case .error:
             errorContent
         }
-    }
-    
-    func onAppear() {
-        manager.loadImage(from: url)
-    }
-    
-    func onDisappear() {
-        manager.cancelTask()
     }
 }

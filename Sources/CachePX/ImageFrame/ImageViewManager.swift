@@ -6,7 +6,6 @@ final class ImageViewManager: ObservableObject {
     @Published private(set) var state: LoadState = .loading
     
     private var loadedURL: URL?
-    private var task: Task<Void, Never>?
     private let service: ImageDownloaderProtocol
     
     init(options: LoadOptions?) {
@@ -17,40 +16,32 @@ final class ImageViewManager: ObservableObject {
         )
     }
     
-    func loadImage(from url: URL) {
+    func load(from url: URL) async {
         guard loadedURL != url else { return }
         
-        task?.cancel()
-        task = Task(priority: .userInitiated) { [weak self] in
-            await MainActor.run { [weak self] in
-                if case .image = self?.state { return }
-                self?.state = .loading
-            }
+        await MainActor.run { [weak self] in
+            if case .image = self?.state { return }
+            self?.state = .loading
+        }
+        
+        do {
+            let stream = await service.imageStreamWithThrowing(from: url.absoluteString)
             
-            do {
-                if let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString) {
-                    for try await img in stream {
-                        await MainActor.run { [weak self] in
-                            self?.state = .image(img)
-                        }
-                    }
-                    await MainActor.run { [weak self] in
-                        self?.loadedURL = url
-                    }
+            for try await img in stream {
+                await MainActor.run { [weak self] in
+                    self?.state = .image(img)
                 }
-            } catch {
-                if !Task.isCancelled {
-                    await MainActor.run { [weak self] in
-                        if case .image = self?.state { return }
-                        self?.state = .error
-                    }
+            }
+            await MainActor.run { [weak self] in
+                self?.loadedURL = url
+            }
+        } catch {
+            if !Task.isCancelled {
+                await MainActor.run { [weak self] in
+                    if case .image = self?.state { return }
+                    self?.state = .error
                 }
             }
         }
-    }
-    
-    func cancelTask() {
-        task?.cancel()
-        task = nil
     }
 }
