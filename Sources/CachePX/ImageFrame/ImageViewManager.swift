@@ -1,61 +1,47 @@
 import Foundation.NSURL
 import Combine
 
-@MainActor
 final class ImageViewManager: ObservableObject {
     
-    private(set) var state: LoadState = .loading
-    private(set) var isLoaded: Bool = false
-    private var task: Task<Void, Never>? = nil
+    @Published private(set) var state: LoadState = .loading
     
-    private let directoryManager: DirectoryManagerProtocol
-    private let imageStorage: ImageStorageProtocol
-    private let loadService: NetworkServiceProtocol
+    private var loadedURL: URL?
     private let service: ImageDownloaderProtocol
     
-    private let options: LoadOptions?
-    
     init(options: LoadOptions?) {
-        self.options = options
-        
-        self.directoryManager = DirectoryManager.shared
-        self.imageStorage = ImageStorageManager(directoryURL: directoryManager.cacheImagesURL)
-        self.loadService = NetworkService()
-        self.service = ImageDownloader(cache: imageStorage,
-                                       loadService: loadService,
-                                       options: options)
+        self.service = ImageDownloader(
+            cache: ImageStorageManager(directoryURL: DirectoryManager.shared.cacheImagesURL),
+            loadService: NetworkService(),
+            options: options
+        )
     }
-}
-
-extension ImageViewManager {
     
-    func loadImage(from url: URL) {
-        guard !isLoaded else { return }
+    func load(from url: URL) async {
+        guard loadedURL != url else { return }
         
-        task = Task.detached(priority: .userInitiated) { [weak self] in
-            do {
-                if let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString) {
-                    for try await img in stream {
-                        await MainActor.run { [weak self] in
-                            self?.state = .image(img)
-                            self?.isLoaded = true
-                            self?.objectWillChange.send()
-                        }
-                    }
-                }
-            } catch {
+        await MainActor.run { [weak self] in
+            if case .image = self?.state { return }
+            self?.state = .loading
+        }
+        
+        do {
+            let stream = await service.imageStreamWithThrowing(from: url.absoluteString)
+            
+            for try await img in stream {
                 await MainActor.run { [weak self] in
-                    self?.state = .error
-                    self?.objectWillChange.send()
+                    self?.state = .image(img)
                 }
             }
-        }
-    }
-    
-    func cancelTask() {
-        DispatchQueue.main.async { [weak self] in
-            self?.task?.cancel()
-            self?.task = nil
+            await MainActor.run { [weak self] in
+                self?.loadedURL = url
+            }
+        } catch {
+            if !Task.isCancelled {
+                await MainActor.run { [weak self] in
+                    if case .image = self?.state { return }
+                    self?.state = .error
+                }
+            }
         }
     }
 }

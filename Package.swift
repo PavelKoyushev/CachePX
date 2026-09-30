@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "CachePX",
     platforms: [
-        .iOS(.v14),
-        .macOS(.v11)
+        .iOS(.v15),
+        .macCatalyst(.v15)
     ],
     products: [
         .library(
