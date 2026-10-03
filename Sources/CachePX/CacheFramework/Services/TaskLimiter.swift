@@ -7,7 +7,7 @@
 
 /// Limits how many tasks run concurrently; extra callers queue and wait their turn.
 ///
-/// Pair every `acquire()` with exactly one `release()` (use `defer`).
+/// Pair every `acquire()` with exactly one `release()`.
 /// Waiting tasks do not observe cancellation until they're resumed.
 actor TaskLimiter {
     

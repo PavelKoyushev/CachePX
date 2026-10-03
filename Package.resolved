@@ -1,13 +1,13 @@
 {
-  "originHash" : "266edd4c791b7a69e231794480b9731c9b8bdeb6b0d59dad58d2868e821d775c",
+  "originHash" : "ba4393ae4e122162f06e08678bafc10aafb504316f5bcbab0f9a1666d49b56dc",
   "pins" : [
     {
       "identity" : "opencv-package",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/PavelKoyushev/OpenCV-package",
       "state" : {
-        "revision" : "188840907a4b9f71a50831e77eee32f80437ae4b",
-        "version" : "1.0.0"
+        "revision" : "911e70c27a5443ba40692ebcc6b7d927cc2fbc7b",
+        "version" : "5.1.0"
       }
     }
   ],
