@@ -33,10 +33,6 @@ public actor ImagePrefetcher {
                 
                 await self?.limiter.acquire()
                 
-                defer {
-                    await self?.limiter.release()
-                }
-                
                 do {
                     try Task.checkCancellation()
                     let stream = await self?.service.imageStreamWithThrowing(from: url.absoluteString)
@@ -50,6 +46,7 @@ public actor ImagePrefetcher {
                     // cancelled
                 }
                 
+                await self?.limiter.release()
                 await self?.taskFinished(for: url)
             }
         }
