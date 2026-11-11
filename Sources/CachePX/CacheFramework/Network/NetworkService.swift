@@ -80,6 +80,7 @@ private extension NetworkService {
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
+        request.setValue("Client/1.0", forHTTPHeaderField: "User-Agent")
         
         if let metadata {
             
